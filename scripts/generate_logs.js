@@ -1,7 +1,7 @@
 const MongoClient = require('mongodb').MongoClient;
 const randomText = require('random-textblock');
 
-const config = require('../config');
+const config = require('../config').app;
 const logger = require('../logger');
 
 const levels = ['error', 'warning', 'info', 'notice', 'debug'];
@@ -34,8 +34,8 @@ async function processCollection(dbConnection, collectionName) {
 	let mongoConnection;
 	let dbConnection;
 	try {
-		mongoConnection = await MongoClient.connect(config.mongodb.url, {useNewUrlParser: true});
-		dbConnection = mongoConnection.db(config.mongodb.db);
+		mongoConnection = await MongoClient.connect(config.dbUrl, {useNewUrlParser: true});
+		dbConnection = mongoConnection.db();
 		for(collectionName of config.logsCollections)
 			await processCollection(dbConnection, collectionName);
 	} catch (e) {

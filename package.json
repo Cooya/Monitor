@@ -6,7 +6,7 @@
   "scripts": {
     "start": "NODE_ENV=dev concurrently \"npm run server\" \"npm run client\"",
     "server": "NODE_ENV=debug nodemon server.js",
-    "server-prod": "NODE_ENV=prod forever --id monitor server.js",
+    "server-prod": "NODE_ENV=prod forever --id monitor start server.js",
     "client": "react-scripts start",
     "build": "react-scripts build",
     "eject": "react-scripts eject",
