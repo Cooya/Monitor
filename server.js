@@ -2,7 +2,7 @@ const bodyParser = require('body-parser');
 const express = require('express');
 const MongoClient = require('mongodb').MongoClient;
 
-const config = require('./config');
+const config = require('./config').app;
 const logger = require('./logger');
 let mongoConnection;
 let dbConnection;
@@ -15,11 +15,9 @@ async function selectCollection(collectioName) {
 
 (async () => {
 	try {
-		mongoConnection = await MongoClient.connect(config.mongodb.url, {useNewUrlParser: true});
+		mongoConnection = await MongoClient.connect(config.dbUrl, {useNewUrlParser: true});
+		dbConnection = mongoConnection.db();
 		logger.info('Connected to database.');
-
-		dbConnection = mongoConnection.db(config.mongodb.db);
-		logger.info('Database "%s" selected.', config.mongodb.db);
 
 		config.logsCollections.forEach(collection => selectCollection(collection));
 		selectCollection(config.requestsCollection);

@@ -2,7 +2,7 @@ const path = require('path');
 const util = require('util');
 const { createLogger, config, format, transports } = require('winston');
 
-const dbConfig = require('./config').mongodb;
+const dbConfig = require('./config').logging;
 
 let transport;
 let exitOnError;
@@ -24,10 +24,8 @@ if (process.env.NODE_ENV == 'production' || process.env.NODE_ENV == 'prod') {
 	require('winston-mongodb');
 	transport = new transports.MongoDB({
 		level: 'debug',
-		db: dbConfig.url + '/' + dbConfig.db,
+		db: dbConfig.dbUrl,
 		collection: dbConfig.collection,
-		username: dbConfig.username,
-		password: dbConfig.password,
 		label: path.basename(process.mainModule.filename),
 		handleExceptions: true,
 		format: format.metadata({ fillWith: ['stack'] })
