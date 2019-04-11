@@ -5,11 +5,12 @@
   "main": "server.js",
   "scripts": {
     "start": "NODE_ENV=dev concurrently \"npm run server\" \"npm run client\"",
-    "server": "NODE_ENV=dev nodemon server.js",
+    "server": "NODE_ENV=debug nodemon server.js",
     "client": "react-scripts start",
     "build": "react-scripts build",
     "eject": "react-scripts eject",
-    "test": "react-scripts test"
+    "test": "react-scripts test",
+    "generate-logs": "node scripts/generate_logs.js"
   },
   "repository": {
     "type": "git",
@@ -34,9 +35,12 @@
     "mongodb": "^3.2.3",
     "passport": "^0.4.0",
     "passport-http": "^0.3.0",
+    "random-textblock": "^1.2.0",
     "react": "^16.8.6",
     "react-dom": "^16.8.6",
-    "react-select": "^2.4.2"
+    "react-select": "^2.4.2",
+    "winston": "^3.2.1",
+    "winston-mongodb": "^5.0.0"
   },
   "browserslist": [
     ">0.2%",

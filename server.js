@@ -5,29 +5,30 @@ const passport = require('passport');
 const DigestStrategy = require('passport-http').DigestStrategy;
 
 const config = require('./config');
+const logger = require('./logger');
 let mongoConnection;
 let dbConnection;
 const collections = {};
 
 async function selectCollection(collectioName) {
 	collections[collectioName] = dbConnection.collection(collectioName);
-	console.log('Collection "%s" selected.', collectioName);
+	logger.info('Collection "%s" selected.', collectioName);
 }
 
 (async () => {
 	try {
-		mongoConnection = await MongoClient.connect(config.dbUrl, {useNewUrlParser: true});
-		console.log('Connected to database.');
+		mongoConnection = await MongoClient.connect(config.mongodb.url, {useNewUrlParser: true});
+		logger.info('Connected to database.');
 
-		dbConnection = mongoConnection.db(config.dbName);
-		console.log('Database "%s" selected.', config.dbName);
+		dbConnection = mongoConnection.db(config.mongodb.db);
+		logger.info('Database "%s" selected.', config.mongodb.db);
 
-		selectCollection(config.logsCollection);
+		config.logsCollections.forEach(collection => selectCollection(collection));
 		selectCollection(config.requestsCollection);
 		selectCollection(config.loggerCollection);
 		selectCollection(config.statsCollection);
 	} catch(e) {
-		console.error(e);
+		logger.error(e);
 		process.exit(1);
 	}
 
@@ -48,18 +49,25 @@ async function selectCollection(collectioName) {
 			]).toArray();
 			res.json(result);
 		} catch(e) {
-			console.error(err);
+			logger.error(err);
 			res.json({error: 'The request to the database has failed.'});
 		};
 	});
+
+	app.get('/monitor/config', async (req, res) => {
+		logger.info('Config request received.');
+		res.json({collections: config.logsCollections});
+		logger.info('Config response sent sucessfully.');
+	});
 	
 	app.post('/monitor/query', async (req, res) => {
-		console.log('Query request received.');
+		logger.info('Query request received.');
 
 		if(!req.body.filters || ! req.body.entryType)
 			return res.json({error: 'Filters and entry type are required in the query.'});
 
 		const filters = req.body.filters;
+		logger.debug(filters);
 		const subqueries = [];
 	
 		let collection;
@@ -73,9 +81,11 @@ async function selectCollection(collectioName) {
 			collection = collections[filters.collection];
 
 			if(filters.module && filters.module.length)
-				subqueries.push({module: filters.module});
-			if(filters.levels && filters.levels.length)
+				subqueries.push({label: filters.module});
+			if(filters.levels && filters.levels.length) {
+				filters.levels = filters.levels.map(v => v.value);
 				subqueries.push({level: {$in: filters.levels}});
+			}
 		}
 		else if(req.body.entryType == 'logger') {
 			collection = collections[config.loggerCollection];
@@ -96,12 +106,12 @@ async function selectCollection(collectioName) {
 		// common date filter
 		if(filters.dateFrom) {
 			if(filters.dateTo)
-				subqueries.push({date: {$gte: filters.dateFrom, $lte: filters.dateTo}});
+				subqueries.push({timestamp: {$gte: new Date(filters.dateFrom), $lte: new Date(filters.dateTo)}});
 			else
-				subqueries.push({date: {$gte: filters.dateFrom}});
+				subqueries.push({timestamp: {$gte: new Date(filters.dateFrom)}});
 		}
 		else if(filters.dateTo)
-			subqueries.push({date: {$lte: filters.dateTo}});
+			subqueries.push({timestamp: {$lte: new Date(filters.dateTo)}});
 	
 	
 		let query;
@@ -112,21 +122,23 @@ async function selectCollection(collectioName) {
 		else
 			query = {};
 	
+		logger.debug(JSON.stringify(query));
+
 		try {
 			const entries = await collection.find(query).sort({date: -1}).limit(parseInt(filters.maxEntries)).toArray();
 			res.json({error: null, entries});
-			console.log('Query response sent successfully.');
+			logger.info('Query response sent successfully, %s entries sent.', entries.length);
 		} catch(e) {
-			console.error(e);
+			logger.error(e);
 			res.json({error: 'The request to the database has failed.'});
 		}
 	});
 
 	app.listen(config.port, (err) => {
 		if(err) {
-			console.error(err);
+			logger.error(err);
 			process.exit(1);
 		}
-		console.log('Server listening on port %s.', config.port);
+		logger.info('Server listening on port %s (%s environment).', config.port, process.env.NODE_ENV);
 	});
 })();
