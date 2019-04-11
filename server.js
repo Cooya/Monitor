@@ -1,8 +1,6 @@
 const bodyParser = require('body-parser');
 const express = require('express');
 const MongoClient = require('mongodb').MongoClient;
-const passport = require('passport');
-const DigestStrategy = require('passport-http').DigestStrategy;
 
 const config = require('./config');
 const logger = require('./logger');
@@ -34,12 +32,7 @@ async function selectCollection(collectioName) {
 
 	const app = express();
 	app.use(bodyParser.json());
-	
-	passport.use(new DigestStrategy({qop: 'auth'}, (username, cb) => {
-		if(username !== config.digestUsername) return cb(null, false);
-		return cb(null, {}, config.digestPassword);
-	}));
-	app.get('/monitor', passport.authenticate('digest', {session: false}));
+	app.use('/', express.static(config.webInterfaceBuildFolder));
 	
 	app.get('/monitor/requests', async (req, res) => {
 		try {

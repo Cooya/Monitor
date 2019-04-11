@@ -2,6 +2,7 @@ const MongoClient = require('mongodb').MongoClient;
 const randomText = require('random-textblock');
 
 const config = require('../config');
+const logger = require('../logger');
 
 const levels = ['error', 'warning', 'info', 'notice', 'debug'];
 const modules = ['server.js', 'controller.js', 'helper.js', 'upload.js', 'builder.js', 'engine.js'];
@@ -38,7 +39,7 @@ async function processCollection(dbConnection, collectionName) {
 		for(collectionName of config.logsCollections)
 			await processCollection(dbConnection, collectionName);
 	} catch (e) {
-		console.error(e);
+		logger.error(e);
 	}
 	mongoConnection.close();
 })();
