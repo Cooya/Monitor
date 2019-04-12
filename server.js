@@ -1,9 +1,9 @@
 const bodyParser = require('body-parser');
 const express = require('express');
+const logger = require('@coya/logger')(require('./config').logging);
 const MongoClient = require('mongodb').MongoClient;
 
-const config = require('./config').app;
-const logger = require('./logger');
+let config = require('./config').app;
 let mongoConnection;
 let dbConnection;
 const collections = {};
